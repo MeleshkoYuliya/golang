@@ -16,15 +16,25 @@ func logFatal(err error) {
 	}
 }
 
+func Init() {
+	ConnectDB()
+}
+
 func ConnectDB() *sql.DB {
 	pgUrl, err := pq.ParseURL(os.Getenv("ELEPHANTSQL_URL"))
 	logFatal(err)
 
 	db, err = sql.Open("postgres", pgUrl)
 	logFatal(err)
-
+	db.SetMaxOpenConns(2)
 	err = db.Ping()
 	logFatal(err)
+	return db
+}
 
+func GetDB() *sql.DB {
+	if db == nil {
+		return ConnectDB()
+	}
 	return db
 }

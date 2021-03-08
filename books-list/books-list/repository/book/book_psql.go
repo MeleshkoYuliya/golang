@@ -3,7 +3,7 @@ package bookRepository
 import (
 	"database/sql"
 	"log"
-	"main/books-list/models"
+	"main/models"
 )
 
 type BookRepository struct{}

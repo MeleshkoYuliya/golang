@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"io/ioutil"
 	"log"
-	"main/books-list/driver"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -22,7 +21,7 @@ func NewMock() (*sql.DB, sqlmock.Sqlmock) {
 }
 
 func TestGetBooks(t *testing.T) {
-	db = driver.ConnectDB()
+	db := NewMock()
 	req, err := http.NewRequest("GET", "localhost:8080", nil)
 	if err != nil {
 		t.Fatalf("could not created request: %v", err)
