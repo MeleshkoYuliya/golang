@@ -3,6 +3,7 @@ package books
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	bookRepository "main/books-list/repository/book"
 	"main/driver"
@@ -12,7 +13,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
 
@@ -110,7 +110,7 @@ func RemoveBook(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(rowsDeleted)
 }
 
-// GetBooks returns list of books
+// CreateSubscriber creates new book subscriber
 func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
 	db := driver.GetDB()
 	var subscriber models.Subscriber
@@ -125,7 +125,7 @@ func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
 	go func(email string) {
 		bookCh := pubSub.Subscribe(subscriber.BookID)
 		for b := range bookCh {
-			callBackF(b, email)
+			callBackF(b, email, subscriber.BookID)
 		}
 
 	}(subscriber.Email)
@@ -133,7 +133,6 @@ func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(subscriber.ID)
 }
 
-func callBackF(b interface{}, email string) {
-	spew.Dump("FFF", b)
-	spew.Dump("Подписка на мыло", email)
+func callBackF(b interface{}, email string, bookID int) {
+	fmt.Printf("Подписка на книгу %v по почте %v", bookID, email)
 }
