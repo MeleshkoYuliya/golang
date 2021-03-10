@@ -43,6 +43,7 @@ func InitAPI() {
 	router.HandleFunc("/books", UpdateBook).Methods("PUT")
 	router.HandleFunc("/books/{id}", RemoveBook).Methods("DELETE")
 	router.HandleFunc("/subscribers", CreateSubscriber).Methods("POST")
+	router.HandleFunc("/suscriptions", SendNotification).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
@@ -133,6 +134,30 @@ func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(subscriber.ID)
 }
 
+// SendNotification send notification on email for each subscriber
+func SendNotification(w http.ResponseWriter, r *http.Request) {
+	db := driver.GetDB()
+	var subscriber models.Subscriber
+	var subscribers []models.Subscriber
+	var bookID int
+	json.NewDecoder(r.Body).Decode(&bookID)
+	rows, err := db.Query("SELECT * from public.subscribers WHERE book_id=$1", bookID)
+	logFatal(err)
+
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&subscriber.ID, &subscriber.Email, &subscriber.BookID)
+		logFatal(err)
+		subscribers = append(subscribers, subscriber)
+	}
+
+	for _, s := range subscribers {
+		fmt.Printf("Отправлена нотификация на почту %v. Книга %v теперь доступна\n", s.BookID, s.Email)
+	}
+
+}
+
 func callBackF(b interface{}, email string, bookID int) {
-	fmt.Printf("Подписка на книгу %v по почте %v", bookID, email)
+	fmt.Printf("Подписка на книгу %v по почте %v \n", bookID, email)
 }
