@@ -64,13 +64,16 @@ func GetBooks(w http.ResponseWriter, r *http.Request) {
 
 // GetBook returns one book by id
 func GetBook(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	r = r.WithContext(ctx)
+
 	params := mux.Vars(r)
 	bookRepo := bookRepository.BookRepository{}
 
 	id, err := strconv.Atoi(params["id"])
 	logFatal(err)
 
-	book, err := bookRepo.GetBook(id)
+	book, err := bookRepo.GetBook(ctx, id)
 	logFatal(err)
 
 	json.NewEncoder(w).Encode(book)
@@ -78,12 +81,15 @@ func GetBook(w http.ResponseWriter, r *http.Request) {
 
 // AddBook adds new book to books list
 func AddBook(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	r = r.WithContext(ctx)
+
 	var book models.Book
 	var bookID int
 
 	json.NewDecoder(r.Body).Decode(&book)
 	bookRepo := bookRepository.BookRepository{}
-	bookID, err := bookRepo.AddBook(book)
+	bookID, err := bookRepo.AddBook(ctx, book)
 	logFatal(err)
 
 	json.NewEncoder(w).Encode(bookID)
@@ -91,10 +97,13 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 
 // UpdateBook updates existing book by id
 func UpdateBook(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	r = r.WithContext(ctx)
+
 	var book models.Book
 	json.NewDecoder(r.Body).Decode(&book)
 	bookRepo := bookRepository.BookRepository{}
-	rowsUpdated, err := bookRepo.UpdateBook(book)
+	rowsUpdated, err := bookRepo.UpdateBook(ctx, book)
 	logFatal(err)
 
 	if book.Available {
@@ -106,13 +115,16 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 
 // RemoveBook deletes book by id
 func RemoveBook(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	r = r.WithContext(ctx)
+
 	params := mux.Vars(r)
 
 	bookRepo := bookRepository.BookRepository{}
 	id, err := strconv.Atoi(params["id"])
 	logFatal(err)
 
-	rowsDeleted, err := bookRepo.RemoveBook(id)
+	rowsDeleted, err := bookRepo.RemoveBook(ctx, id)
 	logFatal(err)
 
 	json.NewEncoder(w).Encode(rowsDeleted)
