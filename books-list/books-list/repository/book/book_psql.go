@@ -1,6 +1,7 @@
 package bookRepository
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"main/driver"
@@ -17,7 +18,7 @@ func logFatal(err error) {
 	}
 }
 
-func (b BookRepository) GetBooks() ([]models.Book, error) {
+func (b BookRepository) GetBooks(ctx context.Context) ([]models.Book, error) {
 	var book models.Book
 	books := []models.Book{}
 	b.db = driver.GetDB()
