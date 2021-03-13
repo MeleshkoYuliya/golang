@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
 
@@ -28,7 +29,7 @@ var s booksService
 
 func logFatal(err error) {
 	if err != nil {
-		log.Fatal(err)
+		spew.Dump(err)
 	}
 }
 
@@ -50,25 +51,23 @@ func InitAPI() {
 
 // GetBooks returns list of books
 func GetBooks(w http.ResponseWriter, r *http.Request) {
-	var book models.Book
 	books = []models.Book{}
 	bookRepo := bookRepository.BookRepository{}
-	books = bookRepo.GetBooks(s.db, book, books)
-
+	books, err := bookRepo.GetBooks()
+	logFatal(err)
 	json.NewEncoder(w).Encode(books)
 }
 
 // GetBook returns one book by id
 func GetBook(w http.ResponseWriter, r *http.Request) {
-	var book models.Book
 	params := mux.Vars(r)
-
-	books = []models.Book{}
 	bookRepo := bookRepository.BookRepository{}
 
 	id, err := strconv.Atoi(params["id"])
 	logFatal(err)
-	book = bookRepo.GetBook(s.db, book, id)
+
+	book, err := bookRepo.GetBook(id)
+	logFatal(err)
 
 	json.NewEncoder(w).Encode(book)
 }
@@ -80,7 +79,8 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(r.Body).Decode(&book)
 	bookRepo := bookRepository.BookRepository{}
-	bookID = bookRepo.AddBook(s.db, book)
+	bookID, err := bookRepo.AddBook(book)
+	logFatal(err)
 
 	json.NewEncoder(w).Encode(bookID)
 }
@@ -90,7 +90,9 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	var book models.Book
 	json.NewDecoder(r.Body).Decode(&book)
 	bookRepo := bookRepository.BookRepository{}
-	rowsUpdated := bookRepo.UpdateBook(s.db, book)
+	rowsUpdated, err := bookRepo.UpdateBook(book)
+	logFatal(err)
+
 	if book.Available {
 		pubSub.Publish(book.ID, "Available")
 	}
@@ -106,7 +108,8 @@ func RemoveBook(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(params["id"])
 	logFatal(err)
 
-	rowsDeleted := bookRepo.RemoveBook(s.db, id)
+	rowsDeleted, err := bookRepo.RemoveBook(id)
+	logFatal(err)
 
 	json.NewEncoder(w).Encode(rowsDeleted)
 }

@@ -3,10 +3,13 @@ package bookRepository
 import (
 	"database/sql"
 	"log"
+	"main/driver"
 	"main/models"
 )
 
-type BookRepository struct{}
+type BookRepository struct {
+	db *sql.DB
+}
 
 func logFatal(err error) {
 	if err != nil {
@@ -14,55 +17,78 @@ func logFatal(err error) {
 	}
 }
 
-func (b BookRepository) GetBooks(db *sql.DB, book models.Book, books []models.Book) []models.Book {
-	books = []models.Book{}
+func (b BookRepository) GetBooks() ([]models.Book, error) {
+	var book models.Book
+	books := []models.Book{}
+	b.db = driver.GetDB()
 
-	rows, err := db.Query("SELECT * FROM public.books_list")
-	logFatal(err)
+	rows, err := b.db.Query("SELECT * FROM public.books_list")
+	if err != nil {
+		return nil, err
+	}
 
 	defer rows.Close()
 
 	for rows.Next() {
 		err := rows.Scan(&book.ID, &book.Title, &book.Available)
-		logFatal(err)
+		if err != nil {
+			return nil, err
+		}
 		books = append(books, book)
 	}
 
-	return books
+	return books, nil
 }
 
-func (b BookRepository) GetBook(db *sql.DB, book models.Book, id int) models.Book {
-	rows := db.QueryRow("SELECT * from public.books_list WHERE id=$1", id)
+func (b BookRepository) GetBook(id int) (models.Book, error) {
+	var book models.Book
+	b.db = driver.GetDB()
+
+	rows := b.db.QueryRow("SELECT * from public.books_list WHERE id=$1", id)
 	err := rows.Scan(&book.ID, &book.Title, &book.Available)
-	logFatal(err)
+	if err != nil {
+		return book, err
+	}
 
-	return book
+	return book, nil
 }
 
-func (b BookRepository) AddBook(db *sql.DB, book models.Book) int {
-	err := db.QueryRow("insert into public.books_list (title, available) values($1, $2) RETURNING id;",
+func (b BookRepository) AddBook(book models.Book) (int, error) {
+	b.db = driver.GetDB()
+	err := b.db.QueryRow("insert into public.books_list (title, available) values($1, $2) RETURNING id;",
 		book.Title, book.Available).Scan(&book.ID)
 
-	logFatal(err)
-	return book.ID
+	if err != nil {
+		return book.ID, err
+	}
+
+	return book.ID, nil
 }
 
-func (b BookRepository) UpdateBook(db *sql.DB, book models.Book) int64 {
-	result, err := db.Exec("UPDATE public.books_list set title=$1, available=$2 WHERE id=$3 RETURNING id",
+func (b BookRepository) UpdateBook(book models.Book) (int64, error) {
+	b.db = driver.GetDB()
+	result, err := b.db.Exec("UPDATE public.books_list set title=$1, available=$2 WHERE id=$3 RETURNING id",
 		&book.Title, &book.Available, &book.ID)
 
 	rowsUpdated, err := result.RowsAffected()
-	logFatal(err)
+	if err != nil {
+		return rowsUpdated, err
+	}
 
-	return rowsUpdated
+	return rowsUpdated, nil
 }
 
-func (b BookRepository) RemoveBook(db *sql.DB, id int) int64 {
-	result, err := db.Exec("DELETE from public.books_list WHERE id=$1", id)
-	logFatal(err)
+func (b BookRepository) RemoveBook(id int) (int64, error) {
+	b.db = driver.GetDB()
+	result, err := b.db.Exec("DELETE from public.books_list WHERE id=$1", id)
+	if err != nil {
+		return 0, err
+	}
 
 	rowsDeleted, err := result.RowsAffected()
-	logFatal(err)
+	if err != nil {
+		return rowsDeleted, err
+	}
 
-	return rowsDeleted
+	return rowsDeleted, nil
 }
