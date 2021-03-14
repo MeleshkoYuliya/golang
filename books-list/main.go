@@ -1,9 +1,8 @@
 package main
 
 import (
-	"main/books-list"
-	"main/driver"
-
+	"github.com/MeleshkoYuliya/golang/book-list/books-list"
+	"github.com/MeleshkoYuliya/golang/book-list/driver"
 	"github.com/subosito/gotenv"
 )
 

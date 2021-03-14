@@ -1,4 +1,4 @@
-module main
+module github.com/MeleshkoYuliya/golang/book-list
 
 go 1.15
 
