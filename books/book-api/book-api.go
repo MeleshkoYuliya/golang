@@ -1,14 +1,14 @@
-package books
+package bookApi
 
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"net/http"
 	"strconv"
 
+	"github.com/MeleshkoYuliya/golang/books/repository"
 	"github.com/MeleshkoYuliya/golang/common/driver"
 	"github.com/MeleshkoYuliya/golang/common/models"
 
@@ -41,8 +41,8 @@ func InitAPI() {
 	router.HandleFunc("/books", AddBook).Methods("POST")
 	router.HandleFunc("/books", UpdateBook).Methods("PUT")
 	router.HandleFunc("/books/{id}", RemoveBook).Methods("DELETE")
-	router.HandleFunc("/subscribers", CreateSubscriber).Methods("POST")
-	router.HandleFunc("/suscriptions", SendNotification).Methods("POST")
+	// router.HandleFunc("/subscribers", CreateSubscriber).Methods("POST")
+	// router.HandleFunc("/suscriptions", SendNotification).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
@@ -51,7 +51,7 @@ func InitAPI() {
 func GetBooks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	bookRepo := bookRepository.BookRepository{}
+	bookRepo := repository.BookRepository{}
 	books, err := bookRepo.GetBooks(ctx)
 	logFatal(err)
 	json.NewEncoder(w).Encode(books)
@@ -62,7 +62,7 @@ func GetBook(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	params := mux.Vars(r)
-	bookRepo := bookRepository.BookRepository{}
+	bookRepo := repository.BookRepository{}
 	id, err := strconv.Atoi(params["id"])
 	logFatal(err)
 
@@ -80,7 +80,7 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 	var bookID int
 
 	json.NewDecoder(r.Body).Decode(&book)
-	bookRepo := bookRepository.BookRepository{}
+	bookRepo := repository.BookRepository{}
 	bookID, err := bookRepo.AddBook(ctx, book)
 	logFatal(err)
 
@@ -93,13 +93,13 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	var book models.Book
 	spew.Dump(json.NewDecoder(r.Body).Decode(&book), "JJJJJJJJ")
 	json.NewDecoder(r.Body).Decode(&book)
-	bookRepo := bookRepository.BookRepository{}
+	bookRepo := repository.BookRepository{}
 	rowsUpdated, err := bookRepo.UpdateBook(ctx, book)
 	logFatal(err)
 
-	if book.Available {
-		s.pubSub.Publish(book.ID, "Available")
-	}
+	// if book.Available {
+	// 	s.pubSub.Publish(book.ID, "Available")
+	// }
 
 	json.NewEncoder(w).Encode(rowsUpdated)
 }
@@ -110,7 +110,7 @@ func RemoveBook(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 
-	bookRepo := bookRepository.BookRepository{}
+	bookRepo := repository.BookRepository{}
 	id, err := strconv.Atoi(params["id"])
 	logFatal(err)
 
@@ -120,54 +120,54 @@ func RemoveBook(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(rowsDeleted)
 }
 
-// CreateSubscriber creates new book subscriber
-func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
-	s.db = driver.GetDB()
-	var subscriber models.Subscriber
+// // CreateSubscriber creates new book subscriber
+// func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
+// 	s.db = driver.GetDB()
+// 	var subscriber models.Subscriber
 
-	json.NewDecoder(r.Body).Decode(&subscriber)
+// 	json.NewDecoder(r.Body).Decode(&subscriber)
 
-	err := s.db.QueryRow("insert into public.subscribers (email, book_id) values($1, $2) RETURNING id;",
-		subscriber.Email, subscriber.BookID).Scan(&subscriber.ID)
+// 	err := s.db.QueryRow("insert into public.subscribers (email, book_id) values($1, $2) RETURNING id;",
+// 		subscriber.Email, subscriber.BookID).Scan(&subscriber.ID)
 
-	logFatal(err)
+// 	logFatal(err)
 
-	go func(email string) {
-		bookCh := s.pubSub.Subscribe(subscriber.BookID)
-		for b := range bookCh {
-			callBackF(b, email, subscriber.BookID)
-		}
+// 	// go func(email string) {
+// 	// 	bookCh := s.pubSub.Subscribe(subscriber.BookID)
+// 	// 	for b := range bookCh {
+// 	// 		callBackF(b, email, subscriber.BookID)
+// 	// 	}
 
-	}(subscriber.Email)
+// 	// }(subscriber.Email)
 
-	json.NewEncoder(w).Encode(subscriber.ID)
-}
+// 	json.NewEncoder(w).Encode(subscriber.ID)
+// }
 
-// SendNotification send notification on email for each subscriber
-func SendNotification(w http.ResponseWriter, r *http.Request) {
-	s.db = driver.GetDB()
-	var subscriber models.Subscriber
+// // SendNotification send notification on email for each subscriber
+// func SendNotification(w http.ResponseWriter, r *http.Request) {
+// 	s.db = driver.GetDB()
+// 	var subscriber models.Subscriber
 
-	var bookID int
-	json.NewDecoder(r.Body).Decode(&bookID)
-	rows, err := s.db.Query("SELECT * from public.subscribers WHERE book_id=$1", bookID)
-	logFatal(err)
+// 	var bookID int
+// 	json.NewDecoder(r.Body).Decode(&bookID)
+// 	rows, err := s.db.Query("SELECT * from public.subscribers WHERE book_id=$1", bookID)
+// 	logFatal(err)
 
-	defer rows.Close()
+// 	defer rows.Close()
 
-	for rows.Next() {
-		err := rows.Scan(&subscriber.ID, &subscriber.Email, &subscriber.BookID)
-		logFatal(err)
-		s.subscribers = append(s.subscribers, subscriber)
-	}
+// 	for rows.Next() {
+// 		err := rows.Scan(&subscriber.ID, &subscriber.Email, &subscriber.BookID)
+// 		logFatal(err)
+// 		s.subscribers = append(s.subscribers, subscriber)
+// 	}
 
-	spew.Dump(s.subscribers, "s.subscribers")
-	for _, sub := range s.subscribers {
-		fmt.Printf("Отправлена нотификация на почту %v. Книга %v теперь доступна\n", sub.Email, sub.BookID)
-	}
+// 	spew.Dump(s.subscribers, "s.subscribers")
+// 	for _, sub := range s.subscribers {
+// 		fmt.Printf("Отправлена нотификация на почту %v. Книга %v теперь доступна\n", sub.Email, sub.BookID)
+// 	}
 
-}
+// }
 
-func callBackF(b interface{}, email string, bookID int) {
-	fmt.Printf("Подписка на книгу %v по почте %v \n", bookID, email)
-}
+// func callBackF(b interface{}, email string, bookID int) {
+// 	fmt.Printf("Подписка на книгу %v по почте %v \n", bookID, email)
+// }
