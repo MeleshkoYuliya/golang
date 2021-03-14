@@ -1,4 +1,4 @@
-package bookApi
+package bookapi
 
 import (
 	"database/sql"

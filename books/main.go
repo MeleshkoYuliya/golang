@@ -1,7 +1,7 @@
 package main
 
 import (
-	bookApi "github.com/MeleshkoYuliya/golang/books/book-api"
+	"github.com/MeleshkoYuliya/golang/books/bookapi"
 	"github.com/MeleshkoYuliya/golang/common/driver"
 	"github.com/subosito/gotenv"
 )
@@ -12,5 +12,5 @@ func init() {
 }
 
 func main() {
-	bookApi.InitAPI()
+	bookapi.InitAPI()
 }
