@@ -46,7 +46,7 @@ func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
 
 	json.NewDecoder(r.Body).Decode(&subscriber)
 
-	err := s.db.QueryRow("insert into public.subscribers (email, book_id) values($1, $2) RETURNING id;",
+	err := n.db.QueryRow("insert into public.subscribers (email, book_id) values($1, $2) RETURNING id;",
 		subscriber.Email, subscriber.BookID).Scan(&subscriber.ID)
 
 	logFatal(err)
@@ -69,7 +69,7 @@ func SendNotification(w http.ResponseWriter, r *http.Request) {
 
 	var bookID int
 	json.NewDecoder(r.Body).Decode(&bookID)
-	rows, err := s.db.Query("SELECT * from public.subscribers WHERE book_id=$1", bookID)
+	rows, err := n.db.Query("SELECT * from public.subscribers WHERE book_id=$1", bookID)
 	logFatal(err)
 
 	defer rows.Close()
@@ -77,10 +77,9 @@ func SendNotification(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		err := rows.Scan(&subscriber.ID, &subscriber.Email, &subscriber.BookID)
 		logFatal(err)
-		s.subscribers = append(n.subscribers, subscriber)
+		n.subscribers = append(n.subscribers, subscriber)
 	}
 
-	spew.Dump(s.subscribers, "s.subscribers")
 	// for _, sub := range s.subscribers {
 	// 	fmt.Printf("Отправлена нотификация на почту %v. Книга %v теперь доступна\n", sub.Email, sub.BookID)
 	// }
