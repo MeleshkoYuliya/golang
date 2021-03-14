@@ -54,7 +54,6 @@ func GetBooks(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	r = r.WithContext(ctx)
 
-	s.books = []models.Book{}
 	bookRepo := bookRepository.BookRepository{}
 	books, err := bookRepo.GetBooks(ctx)
 	logFatal(err)
