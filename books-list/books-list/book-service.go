@@ -1,7 +1,6 @@
 package books
 
 import (
-	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -51,8 +50,7 @@ func InitAPI() {
 
 // GetBooks returns list of books
 func GetBooks(w http.ResponseWriter, r *http.Request) {
-	ctx := context.Background()
-	r = r.WithContext(ctx)
+	ctx := r.Context()
 
 	bookRepo := bookRepository.BookRepository{}
 	books, err := bookRepo.GetBooks(ctx)
