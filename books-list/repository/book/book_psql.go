@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	"main/driver"
-	"main/models"
+
+	"github.com/MeleshkoYuliya/golang/book-list/driver"
+	"github.com/MeleshkoYuliya/golang/book-list/models"
 )
 
 type BookRepository struct {

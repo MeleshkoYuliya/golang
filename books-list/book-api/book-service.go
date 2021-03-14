@@ -5,14 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	bookRepository "main/books-list/repository/book"
-	"main/driver"
-	"main/models"
-	"main/notifier"
 
 	"net/http"
 	"strconv"
 
+	bookRepository "github.com/MeleshkoYuliya/golang/book-list/repository/book"
+	"github.com/MeleshkoYuliya/golang/driver"
+	"github.com/MeleshkoYuliya/golang/models"
+	"github.com/MeleshkoYuliya/golang/notifier"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
