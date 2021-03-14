@@ -1,14 +1,14 @@
 package main
 
 import (
-	"github.com/MeleshkoYuliya/golang/book-list/books-list"
-	"github.com/MeleshkoYuliya/golang/book-list/driver"
+	books "github.com/MeleshkoYuliya/golang/books-list/book-api"
+	"github.com/MeleshkoYuliya/golang/common/driver"
 	"github.com/subosito/gotenv"
 )
 
 func init() {
 	gotenv.Load()
-	driver.ConnectDB()
+	driver.GetDB()
 }
 
 func main() {

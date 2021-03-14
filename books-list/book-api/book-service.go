@@ -9,18 +9,17 @@ import (
 	"net/http"
 	"strconv"
 
-	bookRepository "github.com/MeleshkoYuliya/golang/book-list/books-list/repository/book"
-	"github.com/MeleshkoYuliya/golang/book-list/driver"
-	"github.com/MeleshkoYuliya/golang/book-list/models"
-	"github.com/MeleshkoYuliya/golang/book-list/notifier"
+	"github.com/MeleshkoYuliya/golang/common/driver"
+	"github.com/MeleshkoYuliya/golang/common/models"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
 
 type booksService struct {
-	db          *sql.DB
-	books       []models.Book
-	pubSub      notifier.PubSub
+	db    *sql.DB
+	books []models.Book
+	// pubSub      notifier.PubSub
 	subscribers []models.Subscriber
 }
 
@@ -34,7 +33,7 @@ func logFatal(err error) {
 
 // InitAPI initiates routes
 func InitAPI() {
-	s.pubSub = notifier.NewPubSub()
+	// s.pubSub = notifier.NewPubSub()
 	s.db = driver.GetDB()
 	router := mux.NewRouter()
 	router.HandleFunc("/books", GetBooks).Methods("GET")

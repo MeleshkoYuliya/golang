@@ -1,4 +1,4 @@
-module github.com/MeleshkoYuliya/golang/book-list
+module github.com/MeleshkoYuliya/golang/books-list
 
 go 1.15
 
@@ -10,3 +10,5 @@ require (
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/subosito/gotenv v1.2.0
 )
+
+replace "github.com/MeleshkoYulia/golang/common" => ../common
