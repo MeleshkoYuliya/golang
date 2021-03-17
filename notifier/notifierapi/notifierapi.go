@@ -3,24 +3,26 @@ package notifierapi
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"net/http"
 
 	"github.com/MeleshkoYuliya/golang/common/driver"
 	"github.com/MeleshkoYuliya/golang/common/models"
+	"github.com/MeleshkoYuliya/golang/notifier/pubsub"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
 
 type notifierService struct {
-	db    *sql.DB
-	books []models.Book
-	// pubSub      notifier.PubSub
+	db          *sql.DB
+	books       []models.Book
 	subscribers []models.Subscriber
 }
 
 var n notifierService
+var PubSub pubsub.PubSub
 
 func logFatal(err error) {
 	if err != nil {
@@ -30,7 +32,7 @@ func logFatal(err error) {
 
 // InitAPI initiates routes
 func InitAPI() {
-	// s.pubSub = notifier.NewPubSub()
+	PubSub = pubsub.NewPubSub()
 	n.db = driver.GetDB()
 	router := mux.NewRouter()
 	router.HandleFunc("/subscribers", CreateSubscriber).Methods("POST")
@@ -51,13 +53,13 @@ func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
 
 	logFatal(err)
 
-	// go func(email string) {
-	// 	bookCh := s.pubSub.Subscribe(subscriber.BookID)
-	// 	for b := range bookCh {
-	// 		callBackF(b, email, subscriber.BookID)
-	// 	}
+	go func(email string) {
+		bookCh := PubSub.Subscribe(subscriber.BookID)
+		for b := range bookCh {
+			callBackF(b, email, subscriber.BookID)
+		}
 
-	// }(subscriber.Email)
+	}(subscriber.Email)
 
 	json.NewEncoder(w).Encode(subscriber.ID)
 }
@@ -80,12 +82,12 @@ func SendNotification(w http.ResponseWriter, r *http.Request) {
 		n.subscribers = append(n.subscribers, subscriber)
 	}
 
-	// for _, sub := range s.subscribers {
-	// 	fmt.Printf("Отправлена нотификация на почту %v. Книга %v теперь доступна\n", sub.Email, sub.BookID)
-	// }
+	for _, sub := range n.subscribers {
+		fmt.Printf("Отправлена нотификация на почту %v. Книга %v теперь доступна\n", sub.Email, sub.BookID)
+	}
 
 }
 
-// func callBackF(b interface{}, email string, bookID int) {
-// 	fmt.Printf("Подписка на книгу %v по почте %v \n", bookID, email)
-// }
+func callBackF(b interface{}, email string, bookID int) {
+	fmt.Printf("Подписка на книгу %v по почте %v \n", bookID, email)
+}

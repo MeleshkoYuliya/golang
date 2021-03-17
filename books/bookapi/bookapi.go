@@ -11,15 +11,15 @@ import (
 	"github.com/MeleshkoYuliya/golang/books/repository"
 	"github.com/MeleshkoYuliya/golang/common/driver"
 	"github.com/MeleshkoYuliya/golang/common/models"
+	"github.com/MeleshkoYuliya/golang/notifier/notifierapi"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
 
 type booksService struct {
-	db    *sql.DB
-	books []models.Book
-	// pubSub      notifier.PubSub
+	db          *sql.DB
+	books       []models.Book
 	subscribers []models.Subscriber
 }
 
@@ -33,7 +33,6 @@ func logFatal(err error) {
 
 // InitAPI initiates routes
 func InitAPI() {
-	// s.pubSub = notifier.NewPubSub()
 	s.db = driver.GetDB()
 	router := mux.NewRouter()
 	router.HandleFunc("/books", GetBooks).Methods("GET")
@@ -41,8 +40,6 @@ func InitAPI() {
 	router.HandleFunc("/books", AddBook).Methods("POST")
 	router.HandleFunc("/books", UpdateBook).Methods("PUT")
 	router.HandleFunc("/books/{id}", RemoveBook).Methods("DELETE")
-	// router.HandleFunc("/subscribers", CreateSubscriber).Methods("POST")
-	// router.HandleFunc("/suscriptions", SendNotification).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
@@ -97,9 +94,9 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	rowsUpdated, err := bookRepo.UpdateBook(ctx, book)
 	logFatal(err)
 
-	// if book.Available {
-	// 	s.pubSub.Publish(book.ID, "Available")
-	// }
+	if book.Available {
+		notifierapi.PubSub.Publish(book.ID, "Available")
+	}
 
 	json.NewEncoder(w).Encode(rowsUpdated)
 }
@@ -119,55 +116,3 @@ func RemoveBook(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(rowsDeleted)
 }
-
-// // CreateSubscriber creates new book subscriber
-// func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
-// 	s.db = driver.GetDB()
-// 	var subscriber models.Subscriber
-
-// 	json.NewDecoder(r.Body).Decode(&subscriber)
-
-// 	err := s.db.QueryRow("insert into public.subscribers (email, book_id) values($1, $2) RETURNING id;",
-// 		subscriber.Email, subscriber.BookID).Scan(&subscriber.ID)
-
-// 	logFatal(err)
-
-// 	// go func(email string) {
-// 	// 	bookCh := s.pubSub.Subscribe(subscriber.BookID)
-// 	// 	for b := range bookCh {
-// 	// 		callBackF(b, email, subscriber.BookID)
-// 	// 	}
-
-// 	// }(subscriber.Email)
-
-// 	json.NewEncoder(w).Encode(subscriber.ID)
-// }
-
-// // SendNotification send notification on email for each subscriber
-// func SendNotification(w http.ResponseWriter, r *http.Request) {
-// 	s.db = driver.GetDB()
-// 	var subscriber models.Subscriber
-
-// 	var bookID int
-// 	json.NewDecoder(r.Body).Decode(&bookID)
-// 	rows, err := s.db.Query("SELECT * from public.subscribers WHERE book_id=$1", bookID)
-// 	logFatal(err)
-
-// 	defer rows.Close()
-
-// 	for rows.Next() {
-// 		err := rows.Scan(&subscriber.ID, &subscriber.Email, &subscriber.BookID)
-// 		logFatal(err)
-// 		s.subscribers = append(s.subscribers, subscriber)
-// 	}
-
-// 	spew.Dump(s.subscribers, "s.subscribers")
-// 	for _, sub := range s.subscribers {
-// 		fmt.Printf("Отправлена нотификация на почту %v. Книга %v теперь доступна\n", sub.Email, sub.BookID)
-// 	}
-
-// }
-
-// func callBackF(b interface{}, email string, bookID int) {
-// 	fmt.Printf("Подписка на книгу %v по почте %v \n", bookID, email)
-// }
