@@ -26,3 +26,25 @@ func (n NotifierRepository) CreateSubscriber(ctx context.Context, subscriber mod
 	fmt.Printf("Subscriber was added with id %v", subscriber.ID)
 	return nil
 }
+
+func (n NotifierRepository) GetSubscribersByBookID(ctx context.Context, bookID int) ([]models.Subscriber, error) {
+	n.db = driver.GetDB()
+	var subscriber models.Subscriber
+	var subscribers []models.Subscriber
+
+	rows, err := n.db.Query("SELECT * from public.subscribers WHERE book_id=$1", bookID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		err := rows.Scan(&subscriber.ID, &subscriber.Email, &subscriber.BookID)
+		if err != nil {
+			return nil, err
+		}
+		subscribers = append(subscribers, subscriber)
+	}
+
+	return subscribers, nil
+}

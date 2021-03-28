@@ -17,9 +17,8 @@ import (
 )
 
 type notifierService struct {
-	db          *sql.DB
-	books       []models.Book
-	subscribers []models.Subscriber
+	db    *sql.DB
+	books []models.Book
 }
 
 var n notifierService
@@ -44,7 +43,6 @@ func InitAPI() {
 
 // CreateSubscriber creates new book subscriber
 func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
-	n.db = driver.GetDB()
 	ctx := r.Context()
 	var subscriber models.Subscriber
 	json.NewDecoder(r.Body).Decode(&subscriber)
@@ -70,23 +68,18 @@ func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
 
 // SendNotification send notification on email for each subscriber
 func SendNotification(w http.ResponseWriter, r *http.Request) {
-	n.db = driver.GetDB()
-	var subscriber models.Subscriber
-
+	ctx := r.Context()
 	var bookID int
 	json.NewDecoder(r.Body).Decode(&bookID)
-	rows, err := n.db.Query("SELECT * from public.subscribers WHERE book_id=$1", bookID)
-	logFatal(err)
 
-	defer rows.Close()
+	notifierRepo := repository.NotifierRepository{}
 
-	for rows.Next() {
-		err := rows.Scan(&subscriber.ID, &subscriber.Email, &subscriber.BookID)
-		logFatal(err)
-		n.subscribers = append(n.subscribers, subscriber)
+	subscribers, err := notifierRepo.GetSubscribersByBookID(ctx, bookID)
+	if err != nil {
+		fmt.Printf("Failed to get subscribers by bookID %v. Server responded with status %v", bookID, http.StatusBadRequest)
 	}
 
-	for _, sub := range n.subscribers {
+	for _, sub := range subscribers {
 		fmt.Printf("Отправлена нотификация на почту %v. Книга %v теперь доступна\n", sub.Email, sub.BookID)
 	}
 
