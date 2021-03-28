@@ -1,22 +1,15 @@
-package bookRepository
+package repository
 
 import (
 	"context"
 	"database/sql"
-	"log"
 
-	"github.com/MeleshkoYuliya/golang/book-list/driver"
-	"github.com/MeleshkoYuliya/golang/book-list/models"
+	"github.com/MeleshkoYuliya/golang/common/driver"
+	"github.com/MeleshkoYuliya/golang/common/models"
 )
 
 type BookRepository struct {
 	db *sql.DB
-}
-
-func logFatal(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func (b BookRepository) GetBooks(ctx context.Context) ([]models.Book, error) {
