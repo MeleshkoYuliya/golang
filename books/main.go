@@ -6,11 +6,8 @@ import (
 	"github.com/subosito/gotenv"
 )
 
-func init() {
+func main() {
 	gotenv.Load()
 	driver.GetDB()
-}
-
-func main() {
 	bookapi.InitAPI()
 }
