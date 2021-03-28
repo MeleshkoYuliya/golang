@@ -3,6 +3,7 @@ package bookapi
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"net/http"
@@ -25,12 +26,6 @@ type booksService struct {
 
 var s booksService
 
-func logFatal(err error) {
-	if err != nil {
-		spew.Dump(err)
-	}
-}
-
 // InitAPI initiates routes
 func InitAPI() {
 	s.db = driver.GetDB()
@@ -50,7 +45,9 @@ func GetBooks(w http.ResponseWriter, r *http.Request) {
 
 	bookRepo := repository.BookRepository{}
 	books, err := bookRepo.GetBooks(ctx)
-	logFatal(err)
+	if err != nil {
+		fmt.Printf("Failed to load books. Server request failed with code %v\n", http.StatusNoContent)
+	}
 	json.NewEncoder(w).Encode(books)
 }
 
@@ -61,10 +58,14 @@ func GetBook(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	bookRepo := repository.BookRepository{}
 	id, err := strconv.Atoi(params["id"])
-	logFatal(err)
+	if err != nil {
+		fmt.Printf("Can not conver param id")
+	}
 
 	book, err := bookRepo.GetBook(ctx, id)
-	logFatal(err)
+	if err != nil {
+		fmt.Printf("Failed to get book by bookID %v. Server request failed with code %v\n", id, http.StatusNoContent)
+	}
 
 	json.NewEncoder(w).Encode(book)
 }
@@ -79,7 +80,9 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&book)
 	bookRepo := repository.BookRepository{}
 	bookID, err := bookRepo.AddBook(ctx, book)
-	logFatal(err)
+	if err != nil {
+		fmt.Printf("Failed to add book %v. Server request failed with code %v\n", book, http.StatusBadRequest)
+	}
 
 	json.NewEncoder(w).Encode(bookID)
 }
@@ -92,7 +95,9 @@ func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&book)
 	bookRepo := repository.BookRepository{}
 	rowsUpdated, err := bookRepo.UpdateBook(ctx, book)
-	logFatal(err)
+	if err != nil {
+		fmt.Printf("Failed to update book %v. Server request failed with code %v\n", book, http.StatusBadRequest)
+	}
 
 	if book.Available {
 		notifierapi.PubSub.Publish(book.ID, "Available")
@@ -109,10 +114,14 @@ func RemoveBook(w http.ResponseWriter, r *http.Request) {
 
 	bookRepo := repository.BookRepository{}
 	id, err := strconv.Atoi(params["id"])
-	logFatal(err)
+	if err != nil {
+		fmt.Printf("Can not conver param id")
+	}
 
 	rowsDeleted, err := bookRepo.RemoveBook(ctx, id)
-	logFatal(err)
+	if err != nil {
+		fmt.Printf("Failed to delete book with id %v. Server request failed with code %v\n", id, http.StatusBadRequest)
+	}
 
 	json.NewEncoder(w).Encode(rowsDeleted)
 }

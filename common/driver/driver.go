@@ -2,6 +2,7 @@ package driver
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 	"os"
 
@@ -22,10 +23,15 @@ func Init() {
 
 func ConnectDB() *sql.DB {
 	pgUrl, err := pq.ParseURL(os.Getenv("ELEPHANTSQL_URL"))
-	logFatal(err)
+	if err != nil {
+		fmt.Printf("Failed to connect db")
+	}
 
 	db, err = sql.Open("postgres", pgUrl)
-	logFatal(err)
+	if err != nil {
+		fmt.Printf("Failed to get db")
+	}
+
 	db.SetMaxOpenConns(2)
 	err = db.Ping()
 	logFatal(err)
