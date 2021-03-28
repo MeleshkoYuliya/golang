@@ -14,7 +14,6 @@ import (
 	"github.com/MeleshkoYuliya/golang/common/models"
 	"github.com/MeleshkoYuliya/golang/notifier/notifierapi"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
 
@@ -91,7 +90,6 @@ func AddBook(w http.ResponseWriter, r *http.Request) {
 func UpdateBook(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	var book models.Book
-	spew.Dump(json.NewDecoder(r.Body).Decode(&book), "JJJJJJJJ")
 	json.NewDecoder(r.Body).Decode(&book)
 	bookRepo := repository.BookRepository{}
 	rowsUpdated, err := bookRepo.UpdateBook(ctx, book)

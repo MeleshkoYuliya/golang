@@ -11,6 +11,7 @@ import (
 	"github.com/MeleshkoYuliya/golang/common/driver"
 	"github.com/MeleshkoYuliya/golang/common/models"
 	"github.com/MeleshkoYuliya/golang/notifier/pubsub"
+	"github.com/MeleshkoYuliya/golang/notifier/repository"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/mux"
 )
@@ -44,14 +45,17 @@ func InitAPI() {
 // CreateSubscriber creates new book subscriber
 func CreateSubscriber(w http.ResponseWriter, r *http.Request) {
 	n.db = driver.GetDB()
+	ctx := r.Context()
 	var subscriber models.Subscriber
-
 	json.NewDecoder(r.Body).Decode(&subscriber)
 
-	err := n.db.QueryRow("insert into public.subscribers (email, book_id) values($1, $2) RETURNING id;",
-		subscriber.Email, subscriber.BookID).Scan(&subscriber.ID)
+	notifierRepo := repository.NotifierRepository{}
 
-	logFatal(err)
+	err := notifierRepo.CreateSubscriber(ctx, subscriber)
+
+	if err != nil {
+		fmt.Printf("Failed to create subscriber. Server responded with status %v", http.StatusBadRequest)
+	}
 
 	go func(email string) {
 		bookCh := PubSub.Subscribe(subscriber.BookID)
